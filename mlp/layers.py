@@ -312,7 +312,7 @@ class ReluLayer(Layer):
         gradients with respect to the layer inputs.
         """
         return (outputs > 0) * grads_wrt_outputs
-
+    
     def __repr__(self):
         return 'ReluLayer'
 
@@ -321,10 +321,11 @@ class LeakyReluLayer(Layer):
     def fprop(self, inputs):
         """Forward propagates activations through the layer transformation.
 
-        For inputs `x` and outputs `y` this corresponds to `y = max(0, x)`.
+        For inputs `x` and outputs `y` this corresponds to `y = lrelu(x)`.
+        if x <= 0, lrelu(x) = alpha*x, else lrelu(x) = x.
         """
-        outputs = inputs #remove and replace with your code
-        return outputs
+        alpha = 0.01
+        return np.maximum(inputs, alpha*inputs)
 
     def bprop(self, inputs, outputs, grads_wrt_outputs):
         """Back propagates gradients through a layer.
@@ -332,8 +333,13 @@ class LeakyReluLayer(Layer):
         Given gradients with respect to the outputs of the layer calculates the
         gradients with respect to the layer inputs.
         """
-        gradients = inputs #remove and replace with your code
-        return gradients
+        alpha = 0.01
+        shape = np.shape(inputs)
+        derivatives_wrt_inputs = np.zeros(shape)
+        derivatives_wrt_inputs[inputs>0] = 1
+        derivatives_wrt_inputs[inputs<=0] = alpha
+        gradient_wrt_outputs = derivatives_wrt_inputs *  grads_wrt_outputs
+        return gradient_wrt_outputs
 
     def __repr__(self):
         return 'LeakyReluLayer'
@@ -344,9 +350,14 @@ class ELULayer(Layer):
     def fprop(self, inputs):
         """Forward propagates activations through the layer transformation.
 
-        For inputs `x` and outputs `y` this corresponds to `y = max(0, x)`.
+        For inputs `x` and outputs `y` this corresponds to `y = elu(x)`.
+        if x<=0, alpha*(exp(x)-1) else x
         """
-        outputs = inputs #remove and replace with your code
+        alpha = 1
+        shape = np.shape(inputs)
+        outputs = np.zeros(shape)
+        outputs[inputs>0] = inputs[inputs>0]
+        outputs[inputs<=0] = alpha*(np.exp(inputs[inputs<=0])-1)
         return outputs
 
     def bprop(self, inputs, outputs, grads_wrt_outputs):
@@ -355,8 +366,12 @@ class ELULayer(Layer):
         Given gradients with respect to the outputs of the layer calculates the
         gradients with respect to the layer inputs.
         """
-        gradients = inputs #remove and replace with your code
-        return gradients
+        alpha = 1
+        shape = np.shape(inputs)
+        derivatives_wrt_inputs = np.zeros(shape)
+        derivatives_wrt_inputs[inputs>0] = 1
+        derivatives_wrt_inputs[inputs<=0] = alpha*np.exp(inputs[inputs<=0])
+        return derivatives_wrt_inputs*grads_wrt_outputs
 
     def __repr__(self):
         return 'ELULayer'
@@ -370,7 +385,12 @@ class SELULayer(Layer):
 
         For inputs `x` and outputs `y` this corresponds to `y = max(0, x)`.
         """
-        outputs = inputs #remove and replace with your code
+        alpha = 1.6733
+        lamda = 1.0507
+        shape = np.shape(inputs)
+        outputs = np.zeros(shape)
+        outputs[inputs>0] = lamda*inputs[inputs>0]
+        outputs[inputs<=0] = lamda*alpha*(np.exp(inputs[inputs<=0])-1)
         return outputs
 
     def bprop(self, inputs, outputs, grads_wrt_outputs):
@@ -379,8 +399,13 @@ class SELULayer(Layer):
         Given gradients with respect to the outputs of the layer calculates the
         gradients with respect to the layer inputs.
         """
-        gradients = inputs #remove and replace with your code
-        return gradients
+        alpha = 1.6732632423543772848170429916717
+        lamda = 1.0507009873554804934193349852946
+        shape = np.shape(inputs)
+        derivatives_wrt_inputs = np.zeros(shape)
+        derivatives_wrt_inputs[inputs>0] = lamda
+        derivatives_wrt_inputs[inputs<=0] = lamda*alpha*np.exp(inputs[inputs<=0])
+        return derivatives_wrt_inputs*grads_wrt_outputs
 
     def __repr__(self):
         return 'SELULayer'
