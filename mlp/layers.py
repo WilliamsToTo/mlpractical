@@ -168,6 +168,9 @@ class AffineLayer(LayerWithParameters):
         Returns:
             outputs: Array of layer outputs of shape (batch_size, output_dim).
         """
+        #print('AffineLayerfprop',inputs[0])
+        #print('AffineLayerfpropWeight', self.weights)
+        #print('AffineLayerfpropOutput', self.weights.dot(inputs.T).T + self.biases)
         return self.weights.dot(inputs.T).T + self.biases
 
     def bprop(self, inputs, outputs, grads_wrt_outputs):
@@ -336,8 +339,9 @@ class LeakyReluLayer(Layer):
         alpha = 0.01
         shape = np.shape(inputs)
         derivatives_wrt_inputs = np.zeros(shape)
-        derivatives_wrt_inputs[inputs>0] = 1
-        derivatives_wrt_inputs[inputs<=0] = alpha
+        derivatives_wrt_inputs[inputs>0.] = 1.
+        derivatives_wrt_inputs[inputs<=0.] = alpha
+        #print(inputs)
         gradient_wrt_outputs = derivatives_wrt_inputs *  grads_wrt_outputs
         return gradient_wrt_outputs
 
@@ -385,12 +389,13 @@ class SELULayer(Layer):
 
         For inputs `x` and outputs `y` this corresponds to `y = max(0, x)`.
         """
-        alpha = 1.6733
-        lamda = 1.0507
+        alpha = 1.6732632423543772848170429916717
+        lamda = 1.0507009873554804934193349852946
         shape = np.shape(inputs)
         outputs = np.zeros(shape)
-        outputs[inputs>0] = lamda*inputs[inputs>0]
-        outputs[inputs<=0] = lamda*alpha*(np.exp(inputs[inputs<=0])-1)
+        #print('SELULayerfprop',inputs[0])
+        outputs[inputs>0.] = lamda*inputs[inputs>0.]
+        outputs[inputs<=0.] = lamda*alpha*(np.exp(inputs[inputs<=0.])-1)
         return outputs
 
     def bprop(self, inputs, outputs, grads_wrt_outputs):
@@ -426,7 +431,9 @@ class SoftmaxLayer(Layer):
         Returns:
             outputs: Array of layer outputs of shape (batch_size, output_dim).
         """
-        exp_inputs = np.exp(inputs)
+        #exp_inputs = np.exp(inputs)
+        exp_inputs = np.exp(inputs - inputs.max(-1)[:, None])
+
         return exp_inputs / exp_inputs.sum(-1)[:, None]
 
     def bprop(self, inputs, outputs, grads_wrt_outputs):

@@ -128,10 +128,12 @@ class MultipleLayerModel(object):
                 # give gradients in consistent order with self.params
                 grads_wrt_params += layer.grads_wrt_params(
                     inputs, grads_wrt_outputs)[::-1]
+                #print('model grads_wrt_params isinstance',i,layer,grads_wrt_params)
             # If not at first layer back-propagate gradients
             if i != len(self.layers) - 1:
                 grads_wrt_outputs = layer.bprop(
                     inputs, outputs, grads_wrt_outputs)
+                #print('model grads_wrt_params bprop',i,layer,grads_wrt_outputs)
         return grads_wrt_params[::-1]
 
     def params_penalty(self):
