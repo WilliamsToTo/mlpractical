@@ -5,11 +5,10 @@ This module provides classes for loading datasets and iterating over batches of
 data points.
 """
 
-import pickle
-import gzip
-import numpy as np
 import os
-from mlp import DEFAULT_SEED
+
+import numpy as np
+DEFAULT_SEED = 22012018
 
 
 class DataProvider(object):
@@ -203,7 +202,7 @@ class EMNISTDataProvider(DataProvider):
     """Data provider for EMNIST handwritten digit images."""
 
     def __init__(self, which_set='train', batch_size=100, max_num_batches=-1,
-                 shuffle_order=True, rng=None):
+                 shuffle_order=True, rng=None, flatten=False, one_hot=False):
         """Create a new EMNIST data provider object.
 
         Args:
@@ -223,6 +222,7 @@ class EMNISTDataProvider(DataProvider):
             'Expected which_set to be either train, valid or eval. '
             'Got {0}'.format(which_set)
         )
+        self.one_hot = one_hot
         self.which_set = which_set
         self.num_classes = 47
         # construct path to data using os.path.join to ensure the correct path
@@ -235,11 +235,15 @@ class EMNISTDataProvider(DataProvider):
         )
         # load data from compressed numpy file
         loaded = np.load(data_path)
-        print(loaded.keys())
+
         inputs, targets = loaded['inputs'], loaded['targets']
         inputs = inputs.astype(np.float32)
-        inputs = np.reshape(inputs, newshape=(-1, 28*28))
+        if flatten:
+            inputs = np.reshape(inputs, newshape=(-1, 28*28))
+        else:
+            inputs = np.expand_dims(inputs, axis=3)
         inputs = inputs / 255.0
+
         # pass the loaded data to the parent class __init__
         super(EMNISTDataProvider, self).__init__(
             inputs, targets, batch_size, max_num_batches, shuffle_order, rng)
@@ -247,7 +251,10 @@ class EMNISTDataProvider(DataProvider):
     def next(self):
         """Returns next data batch or raises `StopIteration` if at end."""
         inputs_batch, targets_batch = super(EMNISTDataProvider, self).next()
-        return inputs_batch, self.to_one_of_k(targets_batch)
+        if self.one_hot:
+            return inputs_batch, self.to_one_of_k(targets_batch)
+        else:
+            return inputs_batch, targets_batch
 
     def to_one_of_k(self, int_targets):
         """Converts integer coded class target to 1 of K coded targets.
